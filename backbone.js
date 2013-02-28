@@ -273,7 +273,7 @@
 
     // Return a copy of the model's `attributes` object.
     toJSON: function(options) {
-      return _.clone(this.attributes);
+      return _.extend({}, this.attributes);
     },
 
     // Proxy `Backbone.sync` by default.
@@ -326,7 +326,7 @@
       this._changing  = true;
 
       if (!changing) {
-        this._previousAttributes = _.clone(this.attributes);
+        this._previousAttributes = _.extend({}, this.attributes);
         this.changed = {};
       }
       current = this.attributes, prev = this._previousAttributes;
@@ -394,7 +394,7 @@
     // You can also pass an attributes object to diff against the model,
     // determining if there *would be* a change.
     changedAttributes: function(diff) {
-      if (!diff) return this.hasChanged() ? _.clone(this.changed) : false;
+      if (!diff) return this.hasChanged() ? _.extend({}, this.changed) : false;
       var val, changed = false;
       var old = this._changing ? this._previousAttributes : this.attributes;
       for (var attr in diff) {
@@ -414,7 +414,7 @@
     // Get all of the attributes of the model at the time of the previous
     // `"change"` event.
     previousAttributes: function() {
-      return _.clone(this._previousAttributes);
+      return _.extend({}, this._previousAttributes);
     },
 
     // ---------------------------------------------------------------------
@@ -423,7 +423,7 @@
     // model differs from its current attributes, they will be overriden,
     // triggering a `"change"` event.
     fetch: function(options) {
-      options = options ? _.clone(options) : {};
+      options = options ? _.extend({}, options) : {};
       if (options.parse === void 0) options.parse = true;
       var model = this;
       var success = options.success;
@@ -495,7 +495,7 @@
     // Optimistically removes the model from its collection, if it has one.
     // If `wait: true` is passed, waits for the server to respond before removal.
     destroy: function(options) {
-      options = options ? _.clone(options) : {};
+      options = options ? _.extend({}, options) : {};
       var model = this;
       var success = options.success;
 
@@ -797,7 +797,7 @@
     // you can reset the entire set with a new list of models, without firing
     // any `add` or `remove` events. Fires `reset` when finished.
     reset: function(models, options) {
-      options = options ? _.clone(options) : {};
+      options = options ? _.extend({}, options) : {};
       if (options.parse) models = this.parse(models, options);
       for (var i = 0, l = this.models.length; i < l; i++) {
         this._removeReference(this.models[i]);
@@ -813,7 +813,7 @@
     // collection when they arrive. If `update: true` is passed, the response
     // data will be passed through the `update` method instead of `reset`.
     fetch: function(options) {
-      options = options ? _.clone(options) : {};
+      options = options ? _.extend({}, options) : {};
       if (options.parse === void 0) options.parse = true;
       var success = options.success;
       var collection = this;
@@ -831,7 +831,7 @@
     // collection immediately, unless `wait: true` is passed, in which case we
     // wait for the server to agree.
     create: function(model, options) {
-      options = options ? _.clone(options) : {};
+      options = options ? _.extend({}, options) : {};
       if (!(model = this._prepareModel(model, options))) return false;
       if (!options.wait) this.add(model, options);
       var collection = this;
