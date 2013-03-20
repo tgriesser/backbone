@@ -690,7 +690,7 @@
             existing.set(model.attributes, options);
             if (sortable && !sort && existing.hasChanged(sortAttr)) sort = true;
           }
-          existing._cleanEvents();
+          model._cleanEvents();
 
         // This is a new model, push it to the `toAdd` list.
         } else if (options.add) {
@@ -701,6 +701,8 @@
           model.on('all', this._onModelEvent, this);
           this._byId[model.cid] = model;
           if (model.id != null) this._byId[model.id] = model;
+        } else {
+          model._cleanEvents();
         }
       }
 
