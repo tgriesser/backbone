@@ -251,7 +251,6 @@
     this.attributes = {};
     if (options.collection) this.collection = options.collection;
     if (options.parse) attrs = this.parse(attrs, options) || {};
-    options._attrs || (options._attrs = attrs);
     if (defaults = _.result(this, 'defaults')) {
       attrs = _.defaults({}, attrs, defaults);
     }
@@ -433,7 +432,7 @@
       var model = this;
       var success = options.success;
       options.success = function(resp) {
-        if (!model.set(model.parse(resp, options), options)) return false;
+        if (!model.set(model.constructor.parse(model.parse(resp, options), options), options)) return false;
         if (success) success(model, resp, options);
         model.trigger('sync', model, resp, options);
       };
@@ -479,7 +478,7 @@
       options.success = function(resp) {
         // Ensure attributes are restored during synchronous saves.
         model.attributes = attributes;
-        var serverAttrs = model.parse(resp, options);
+        var serverAttrs = model.constructor.parse(model.parse(resp, options), options);
         if (options.wait) serverAttrs = _.extend(attrs || {}, serverAttrs);
         if (_.isObject(serverAttrs) && !model.set(serverAttrs, options)) {
           return false;
@@ -664,33 +663,41 @@
     // the core operation for updating the data contained by the collection.
     set: function(models, options) {
       options = _.defaults({}, options, setOptions);
-      if (options.parse) models = this.parse(models, options);
+      if (options.parse) models = this.constructor.parse(this.parse(models, options), options);
       if (!_.isArray(models)) models = models ? [models] : [];
-      var i, l, model, attrs, existing, sort;
+      var i, l, id, model, attrs, existing, sort;
       var at = options.at;
+      var targetModel = this.model;
       var sortable = this.comparator && (at == null) && options.sort !== false;
       var sortAttr = _.isString(this.comparator) ? this.comparator : null;
       var toAdd = [], toRemove = [], modelMap = {};
       var add = options.add, merge = options.merge, remove = options.remove;
       var order = !sortable && add && remove ? [] : false;
 
-      // Turn bare objects into model references, and prevent invalid models
-      // from being added.
+      // Determine the `id` we'll be using for existence checking, if the
+      // object isn't a model.
       for (i = 0, l = models.length; i < l; i++) {
-        if (!(model = this._prepareModel(attrs = models[i], options))) continue;
+        attrs = models[i];
+        if (attrs instanceof Model) {
+          id = model = attrs;
+        } else {
+          if (options.parse) attrs = targetModel.parse(attrs, options);
+          id = attrs[targetModel.prototype.idAttribute];
+        }
 
         // If a duplicate is found, prevent it from being added and
         // optionally merge it into the existing model.
-        if (existing = this.get(model)) {
+        if (existing = this.get(id)) {
           if (remove) modelMap[existing.cid] = true;
           if (merge) {
-            attrs = attrs === model ? model.attributes : options._attrs;
+            attrs = attrs === model ? model.attributes : attrs;
+            if (options.parse) attrs = existing.parse(attrs, options);
             existing.set(attrs, options);
             if (sortable && !sort && existing.hasChanged(sortAttr)) sort = true;
           }
-
         // This is a new model, push it to the `toAdd` list.
         } else if (add) {
+          if (!(model = this._prepareModel(attrs, options))) continue;
           toAdd.push(model);
 
           // Listen to added models' events, and index models for lookup by
@@ -700,7 +707,6 @@
           if (model.id != null) this._byId[model.id] = model;
         }
         if (order) order.push(existing || model);
-        delete options._attrs;
       }
 
       // Remove nonexistent models if appropriate.
@@ -756,7 +762,6 @@
 
     // Add a model to the end of the collection.
     push: function(model, options) {
-      model = this._prepareModel(model, options);
       this.add(model, _.extend({at: this.length}, options));
       return model;
     },
@@ -770,7 +775,6 @@
 
     // Add a model to the beginning of the collection.
     unshift: function(model, options) {
-      model = this._prepareModel(model, options);
       this.add(model, _.extend({at: 0}, options));
       return model;
     },
@@ -971,6 +975,10 @@
       return _[method](this.models, iterator, context);
     };
   });
+
+  Model.parse = Collection.parse = function(attrs) {
+    return attrs;
+  };
 
   // Backbone.View
   // -------------
