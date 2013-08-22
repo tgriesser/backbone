@@ -663,7 +663,7 @@
     // the core operation for updating the data contained by the collection.
     set: function(models, options) {
       options = _.defaults({}, options, setOptions);
-      if (options.parse) models = this.constructor.parse(this.parse(models, options), options);
+      if (options.parse) models = this.parse(models, options);
       if (!_.isArray(models)) models = models ? [models] : [];
       var i, l, id, model, attrs, existing, sort;
       var at = options.at;
@@ -762,8 +762,9 @@
 
     // Add a model to the end of the collection.
     push: function(model, options) {
-      this.add(model, _.extend({at: this.length}, options));
-      return model;
+      var len = this.length;
+      var added = this.add(model, _.extend({at: len}, options));
+      return added ? added.at(len) : false;
     },
 
     // Remove a model from the end of the collection.
@@ -775,8 +776,8 @@
 
     // Add a model to the beginning of the collection.
     unshift: function(model, options) {
-      this.add(model, _.extend({at: 0}, options));
-      return model;
+      var added = this.add(model, _.extend({at: 0}, options));
+      return added ? added.at(0) : false;
     },
 
     // Remove a model from the beginning of the collection.
@@ -976,7 +977,10 @@
     };
   });
 
-  Model.parse = Collection.parse = function(attrs) {
+  // A static parse method, if any additional parsing is needed to convert
+  // server responses into the flattened model and collection format
+  // exepected by Backbone.
+  Model.parse = function(attrs) {
     return attrs;
   };
 
