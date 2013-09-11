@@ -309,7 +309,7 @@
     // the core primitive operation of a model, updating the data and notifying
     // anyone who needs to know about the change in state. The heart of the beast.
     set: function(key, val, options) {
-      var attr, attrs, unset, changes, silent, changing, prev, current;
+      var id, attr, attrs, unset, changes, silent, changing, prev, current;
       if (key == null) return this;
 
       // Handle both `"key", value` and `{key: value}` -style arguments.
@@ -339,7 +339,7 @@
       current = this.attributes, prev = this._previousAttributes;
 
       // Check for changes of `id`.
-      if (this.idAttribute in attrs) this.id = attrs[this.idAttribute];
+      if (this._getId() in attrs) this.id = this._getId(attrs);
 
       // For each `set` attribute, update or delete the current value.
       for (attr in attrs) {
@@ -568,6 +568,14 @@
       if (!error) return true;
       this.trigger('invalid', this, error, _.extend(options, {validationError: error}));
       return false;
+    },
+
+    // Helper for retreiving the `idAttribute`, unless `attrs` are defined, in which
+    // case the value for the id is returned.
+    _getId: function(attrs) {
+      var idAttrFn = this.prototype ? this.prototype.idAttribute : this.idAttribute;
+      if (_.isFunction(idAttrFn)) return idAttrFn(attrs);
+      return attrs ? attrs[idAttrFn] : idAttrFn;
     }
 
   });
@@ -667,8 +675,9 @@
       options = _.defaults({}, options, setOptions);
       if (options.parse) models = this.parse(models, options);
       if (!_.isArray(models)) models = models ? [models] : [];
-      var i, l, model, attrs, existing, sort;
+      var i, l, id, model, attrs, existing, sort;
       var at = options.at;
+      var targetModel = this.model;
       var sortable = this.comparator && (at == null) && options.sort !== false;
       var sortAttr = _.isString(this.comparator) ? this.comparator : null;
       var toAdd = [], toRemove = [], modelMap = {};
@@ -678,20 +687,27 @@
       // Turn bare objects into model references, and prevent invalid models
       // from being added.
       for (i = 0, l = models.length; i < l; i++) {
-        if (!(model = this._prepareModel(attrs = models[i], options))) continue;
+        attrs = models[i];
+        if (attrs instanceof Model) {
+          id = model = attrs;
+        } else {
+          id = targetModel.prototype._getId(attrs);
+        }
 
         // If a duplicate is found, prevent it from being added and
         // optionally merge it into the existing model.
-        if (existing = this.get(model)) {
+        if (existing = this.get(id)) {
           if (remove) modelMap[existing.cid] = true;
           if (merge) {
-            attrs = attrs === model ? model.attributes : options._attrs;
+            attrs = attrs === model ? model.attributes : attrs;
+            if (options.parse) attrs = existing.parse(attrs, options);
             existing.set(attrs, options);
             if (sortable && !sort && existing.hasChanged(sortAttr)) sort = true;
           }
 
         // This is a new model, push it to the `toAdd` list.
         } else if (add) {
+          if (!(model = this._prepareModel(attrs, options))) continue;
           toAdd.push(model);
 
           // Listen to added models' events, and index models for lookup by
@@ -701,7 +717,6 @@
           if (model.id != null) this._byId[model.id] = model;
         }
         if (order) order.push(existing || model);
-        delete options._attrs;
       }
 
       // Remove nonexistent models if appropriate.
@@ -757,7 +772,6 @@
 
     // Add a model to the end of the collection.
     push: function(model, options) {
-      model = this._prepareModel(model, options);
       this.add(model, _.extend({at: this.length}, options));
       return model;
     },
@@ -771,7 +785,6 @@
 
     // Add a model to the beginning of the collection.
     unshift: function(model, options) {
-      model = this._prepareModel(model, options);
       this.add(model, _.extend({at: 0}, options));
       return model;
     },
@@ -922,8 +935,8 @@
     _onModelEvent: function(event, model, collection, options) {
       if ((event === 'add' || event === 'remove') && collection !== this) return;
       if (event === 'destroy') this.remove(model, options);
-      if (model && event === 'change:' + model.idAttribute) {
-        delete this._byId[model.previous(model.idAttribute)];
+      if (model && event === 'change:' + model._getId()) {
+        delete this._byId[model.previous(model._getId())];
         if (model.id != null) this._byId[model.id] = model;
       }
       this.trigger.apply(this, arguments);
