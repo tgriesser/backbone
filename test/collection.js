@@ -228,6 +228,9 @@ $(document).ready(function() {
     var Model = Backbone.Model.extend({
       parse: function (data) {
         return data.model;
+      },
+      getId: function(attrs) {
+        return attrs.model.id;
       }
     });
     var collection = new Backbone.Collection();
@@ -976,7 +979,10 @@ $(document).ready(function() {
 
   test("`set` and model level `parse`", function() {
     var Model = Backbone.Model.extend({
-      parse: function (res) { return res.model; }
+      parse: function (res) { return res.model; },
+      getId: function(attrs) {
+        return attrs.model.id;
+      }
     });
     var Collection = Backbone.Collection.extend({
       model: Model,

@@ -339,7 +339,7 @@
       current = this.attributes, prev = this._previousAttributes;
 
       // Check for changes of `id`.
-      if (this._getId() in attrs) this.id = this._getId(attrs);
+      if (this.idAttribute in attrs) this.id = attrs[this.idAttribute];
 
       // For each `set` attribute, update or delete the current value.
       for (attr in attrs) {
@@ -554,6 +554,15 @@
       return this.id == null;
     },
 
+    // Helper for retreiving the `idAttribute`, unless `attrs` are defined, in which
+    // case the value for the id is returned.
+    getId: function(attrs) {
+      if (attrs) {
+        return this.prototype ? attrs[this.prototype.idAttribute] : attrs[this.idAttribute];
+      }
+      return this.id;
+    },
+
     // Check if the model is currently in a valid state.
     isValid: function(options) {
       return this._validate({}, _.extend(options || {}, { validate: true }));
@@ -568,14 +577,6 @@
       if (!error) return true;
       this.trigger('invalid', this, error, _.extend(options, {validationError: error}));
       return false;
-    },
-
-    // Helper for retreiving the `idAttribute`, unless `attrs` are defined, in which
-    // case the value for the id is returned.
-    _getId: function(attrs) {
-      var idAttrFn = this.prototype ? this.prototype.idAttribute : this.idAttribute;
-      if (_.isFunction(idAttrFn)) return idAttrFn(attrs);
-      return attrs ? attrs[idAttrFn] : idAttrFn;
     }
 
   });
@@ -691,7 +692,7 @@
         if (attrs instanceof Model) {
           id = model = attrs;
         } else {
-          id = targetModel.prototype._getId(attrs);
+          id = options.parse ? targetModel.prototype.getId(attrs) : attrs[targetModel.prototype.idAttribute];
         }
 
         // If a duplicate is found, prevent it from being added and
@@ -935,8 +936,8 @@
     _onModelEvent: function(event, model, collection, options) {
       if ((event === 'add' || event === 'remove') && collection !== this) return;
       if (event === 'destroy') this.remove(model, options);
-      if (model && event === 'change:' + model._getId()) {
-        delete this._byId[model.previous(model._getId())];
+      if (model && event === 'change:' + model.idAttribute) {
+        delete this._byId[model.previous(model.idAttribute)];
         if (model.id != null) this._byId[model.id] = model;
       }
       this.trigger.apply(this, arguments);
