@@ -229,8 +229,8 @@ $(document).ready(function() {
       parse: function (data) {
         return data.model;
       },
-      getId: function(attrs) {
-        return attrs.model.id;
+      idAttribute: function(attrs, options) {
+        return attrs ? (options.parse ? attrs.model.id : attrs.id) : 'id';
       }
     });
     var collection = new Backbone.Collection();
@@ -980,8 +980,8 @@ $(document).ready(function() {
   test("`set` and model level `parse`", function() {
     var Model = Backbone.Model.extend({
       parse: function (res) { return res.model; },
-      getId: function(attrs) {
-        return attrs.model.id;
+      idAttribute: function(attrs, options) {
+        return attrs ? (options.parse ? attrs.model.id : attrs.id) : 'id';
       }
     });
     var Collection = Backbone.Collection.extend({

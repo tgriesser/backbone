@@ -339,7 +339,7 @@
       current = this.attributes, prev = this._previousAttributes;
 
       // Check for changes of `id`.
-      if (this.idAttribute in attrs) this.id = attrs[this.idAttribute];
+      if (getId(this) in attrs) this.id = attrs[getId(this)];
 
       // For each `set` attribute, update or delete the current value.
       for (attr in attrs) {
@@ -554,15 +554,6 @@
       return this.id == null;
     },
 
-    // Helper for retreiving the `idAttribute`, unless `attrs` are defined, in which
-    // case the value for the id is returned.
-    getId: function(attrs) {
-      if (attrs) {
-        return this.prototype ? attrs[this.prototype.idAttribute] : attrs[this.idAttribute];
-      }
-      return this.id;
-    },
-
     // Check if the model is currently in a valid state.
     isValid: function(options) {
       return this._validate({}, _.extend(options || {}, { validate: true }));
@@ -678,7 +669,7 @@
       if (!_.isArray(models)) models = models ? [models] : [];
       var i, l, id, model, attrs, existing, sort;
       var at = options.at;
-      var targetModel = this.model;
+      var targetModel = this.model.prototype;
       var sortable = this.comparator && (at == null) && options.sort !== false;
       var sortAttr = _.isString(this.comparator) ? this.comparator : null;
       var toAdd = [], toRemove = [], modelMap = {};
@@ -692,7 +683,7 @@
         if (attrs instanceof Model) {
           id = model = attrs;
         } else {
-          id = options.parse ? targetModel.prototype.getId(attrs) : attrs[targetModel.prototype.idAttribute];
+          id = getId(targetModel, attrs, options);
         }
 
         // If a duplicate is found, prevent it from being added and
@@ -936,8 +927,8 @@
     _onModelEvent: function(event, model, collection, options) {
       if ((event === 'add' || event === 'remove') && collection !== this) return;
       if (event === 'destroy') this.remove(model, options);
-      if (model && event === 'change:' + model.idAttribute) {
-        delete this._byId[model.previous(model.idAttribute)];
+      if (model && event === 'change:' + getId(model)) {
+        delete this._byId[model.previous(getId(model))];
         if (model.id != null) this._byId[model.id] = model;
       }
       this.trigger.apply(this, arguments);
@@ -1573,6 +1564,15 @@
   // Throw an error when a URL is needed, and none is supplied.
   var urlError = function() {
     throw new Error('A "url" property or function must be specified');
+  };
+
+  // Helper for retreiving the `idAttribute`, unless `attrs` are defined, in which
+  // case the value for the id is returned.
+  var getId = function(model, attrs, options) {
+    if (_.isFunction(model.idAttribute)) {
+      return model.idAttribute(attrs, options || {});
+    }
+    return attrs ? attrs[model.idAttribute] : model.idAttribute;
   };
 
   // Wrap an optional error callback with a fallback error event.
