@@ -762,8 +762,7 @@
 
     // Add a model to the end of the collection.
     push: function(model, options) {
-      model = this._prepareModel(model, options);
-      this.add(model, _.extend({at: this.length}, options));
+      this.add(model, _.extend({at: this.length, merge: false}, options));
       return model;
     },
 
@@ -776,8 +775,7 @@
 
     // Add a model to the beginning of the collection.
     unshift: function(model, options) {
-      model = this._prepareModel(model, options);
-      this.add(model, _.extend({at: 0}, options));
+      this.add(model, _.extend({at: 0, merge: false}, options));
       return model;
     },
 
