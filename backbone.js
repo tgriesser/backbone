@@ -143,12 +143,12 @@
     // receive the true name of the event as the first argument).
     trigger: function(name) {
       if (!this._events) return this;
-      var args = slice.call(arguments, 1);
+      var args = argumentArray(arguments, 1);
       if (!eventsApi(this, 'trigger', name, args)) return this;
       var events = this._events[name];
       var allEvents = this._events.all;
       if (events) triggerEvents(events, args);
-      if (allEvents) triggerEvents(allEvents, arguments);
+      if (allEvents) triggerEvents(allEvents, [name].concat(args));
       return this;
     },
 
@@ -578,7 +578,7 @@
   // Mix in each Underscore method as a proxy to `Model#attributes`.
   _.each(modelMethods, function(method) {
     Model.prototype[method] = function() {
-      var args = slice.call(arguments);
+      var args = argumentArray(arguments);
       args.unshift(this.attributes);
       return _[method].apply(_, args);
     };
@@ -956,7 +956,7 @@
   // Mix in each Underscore method as a proxy to `Collection#models`.
   _.each(methods, function(method) {
     Collection.prototype[method] = function() {
-      var args = slice.call(arguments);
+      var args = argumentArray(arguments);
       args.unshift(this.models);
       return _[method].apply(_, args);
     };
@@ -1581,6 +1581,16 @@
       if (error) error(model, resp, options);
       model.trigger('error', model, resp, options);
     };
+  };
+
+  // Helper function for optimizing the use of arguments.
+  var argumentArray = function(args, sliced) {
+    sliced = sliced || 0;
+    var newArgs = [];
+    for (var i = 0, l = args.length; i < l; i++) {
+      newArgs[i] = args[i];
+    }
+    return slice.call(newArgs, sliced);
   };
 
   return Backbone;
