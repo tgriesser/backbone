@@ -19,7 +19,7 @@
   // Next for Node.js or CommonJS. jQuery may not be needed as a module.
   } else if (typeof exports !== 'undefined') {
     var _ = require('underscore'), $;
-    try { $ = require('jquery'); } catch(e) {};
+    try { $ = require('jquery'); } catch(e) {}
     factory(root, exports, _, $);
 
   // Finally, as a browser global.
@@ -119,7 +119,7 @@
       names = name ? [name] : _.keys(this._events);
       for (i = 0, l = names.length; i < l; i++) {
         name = names[i];
-        if (events = this._events[name]) {
+        if ((events = this._events[name])) {
           this._events[name] = retain = [];
           if (callback || context) {
             for (j = 0, k = events.length; j < k; j++) {
@@ -693,7 +693,7 @@
 
         // If a duplicate is found, prevent it from being added and
         // optionally merge it into the existing model.
-        if (existing = this.get(id)) {
+        if ((existing = this.get(id))) {
           if (remove) modelMap[existing.cid] = true;
           if (merge) {
             attrs = attrs === model ? model.attributes : attrs;
@@ -1004,7 +1004,8 @@
   var delegateEventSplitter = /^(\S+)\s*(.*)$/;
 
   // List of view options to be merged as properties.
-  var viewOptions = ['model', 'collection', 'el', 'id', 'attributes', 'className', 'tagName', 'events'];
+  var viewOptions = ['model', 'collection', 'el', 'id',
+    'attributes', 'className', 'tagName', 'events'];
 
   // Set up all inheritable **Backbone.View** properties and methods.
   _.extend(View.prototype, Events, {
@@ -1145,7 +1146,8 @@
     }
 
     // Ensure that we have the appropriate request data.
-    if (options.data == null && model && (method === 'create' || method === 'update' || method === 'patch')) {
+    if (options.data == null && model &&
+        (method === 'create' || method === 'update' || method === 'patch')) {
       params.contentType = 'application/json';
       params.data = JSON.stringify(options.attrs || model.toJSON(options));
     }
@@ -1380,7 +1382,8 @@
       this._hasPushState    = !!(this.options.pushState && this.history && this.history.pushState);
       var fragment          = this.getFragment();
       var docMode           = document.documentMode;
-      var oldIE             = (isExplorer.exec(navigator.userAgent.toLowerCase()) && (!docMode || docMode <= 7));
+      var oldIE             = (isExplorer.exec(navigator.userAgent.toLowerCase()) &&
+                                (!docMode || docMode <= 7));
 
       // Normalize root to always include a leading and trailing slash.
       this.root = ('/' + this.root + '/').replace(rootStripper, '/');

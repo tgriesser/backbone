@@ -10,13 +10,14 @@
   "devDependencies": {
     "phantomjs": "1.9.0-1",
     "docco": "0.6.1",
-    "coffee-script": "1.6.1"
+    "coffee-script": "1.6.1",
+    "jshint": "2.4.1"
   },
   "scripts": {
-    "test": "phantomjs test/vendor/runner.js test/index.html?noglobals=true && coffee test/model.coffee",
+    "test": "jshint backbone.js && phantomjs test/vendor/runner.js test/index.html?noglobals=true && coffee test/model.coffee",
     "build": "uglifyjs backbone.js --mangle --source-map backbone-min.map -o backbone-min.js",
     "doc": "docco backbone.js && docco examples/todos/todos.js examples/backbone.localstorage.js",
-    "lint": "jsl -nofilelisting -nologo -conf docs/jsl.conf -process backbone.js"
+    "lint": "jshint backbone.js"
   },
   "main"          : "backbone.js",
   "version"       : "1.1.0",
@@ -24,5 +25,11 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/jashkenas/backbone.git"
+  },
+  "jshintConfig": {
+    "expr": true,
+    "eqnull": true,
+    "-W058": true,
+    "maxlen": 100
   }
 }
